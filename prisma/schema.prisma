@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  DOCTOR
+  SECRETARY
+}
+
+enum AppointmentStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(SECRETARY)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  patientName String
+  date        DateTime
+  time        String            // Format "HH:mm"
+  status      AppointmentStatus @default(PENDING)
+  revenue     Float             @default(0)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model Availability {
+  id        String   @id @default(uuid())
+  dayOfWeek Int      // 0 (Sunday) to 6 (Saturday)
+  startTime String   // Format "HH:mm"
+  endTime   String   // Format "HH:mm"
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model BlockedEvent {
+  id        String   @id @default(uuid())
+  title     String
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id                String  @id @default("default")
+  adminEmail        String
+  calendarStartTime String  @default("08:00")
+  autoComplete      Boolean @default(false)
+  updatedAt         DateTime @updatedAt
+}
