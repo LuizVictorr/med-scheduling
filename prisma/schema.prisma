@@ -32,8 +32,10 @@ model Profile {
 model Appointment {
   id          String            @id @default(uuid())
   patientName String
+  type        String?
   date        DateTime
-  time        String            // Format "HH:mm"
+  endTime     DateTime?
+  color       String?
   status      AppointmentStatus @default(PENDING)
   revenue     Float             @default(0)
   notes       String?
@@ -56,6 +58,22 @@ model BlockedEvent {
   startTime DateTime
   endTime   DateTime
   createdAt DateTime @default(now())
+}
+
+model Servico {
+  id        String   @id @default(uuid())
+  nome      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("servicos")
+}
+
+model TipoEvento {
+  id        String   @id @default(uuid())
+  nome      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("tipos_eventos")
 }
 
 model Setting {
