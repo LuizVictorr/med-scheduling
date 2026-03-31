@@ -231,23 +231,25 @@ export default function AvailabilityPage() {
 
   return (
     <div className="flex flex-col gap-8">
-    <div className="flex flex-col gap-5 transition-all duration-500 animate-in fade-in slide-in-from-top-4">
-      <div className="flex flex-col gap-1">
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 transition-all duration-500 animate-in fade-in slide-in-from-top-4">
+      <div className="flex flex-col gap-1 text-center md:text-left">
         <h1 className="text-4xl font-black tracking-tighter uppercase text-zinc-900 dark:text-zinc-100">Disponibilidade</h1>
         <p className="text-muted-foreground text-sm sm:text-base font-medium leading-relaxed max-w-2xl">Configure seus horários de atendimento recorrentes e exceções para manter sua agenda organizada.</p>
       </div>
-      <Button 
-        className="bg-emerald-600 hover:bg-emerald-700 h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-emerald-200/40 dark:shadow-none rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-white w-fit flex items-center justify-center gap-3"
-        onClick={handleSave}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <Save className="h-5 w-5" />
-        )}
-        {isSaving ? "Salvando..." : "Salvar Alterações"}
-      </Button>
+      <div className="flex justify-center md:justify-end shrink-0">
+        <Button 
+          className="bg-emerald-600 hover:bg-emerald-700 h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-emerald-200/40 dark:shadow-none rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-white w-full sm:w-fit flex items-center justify-center gap-3"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Save className="h-5 w-5" />
+          )}
+          {isSaving ? "Salvando..." : "Salvar Alterações"}
+        </Button>
+      </div>
     </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -435,59 +437,66 @@ export default function AvailabilityPage() {
       </div>
 
       <Dialog open={isOverrideDialogOpen} onOpenChange={(open) => !open && closeOverrideDialog()}>
-        <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-zinc-950 mx-4 sm:mx-0">
-          <DialogHeader className="p-8 pb-0">
-            <DialogTitle className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+        <DialogContent className="w-[95vw] sm:max-w-[500px] p-0 overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-3xl">
+          <DialogHeader className="px-6 py-5 sm:p-8 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white">
+            <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tighter">
               {editingId ? "Editar Exceção" : "Adicionar Exceção"}
             </DialogTitle>
-            <DialogDescription className="text-zinc-500 dark:text-zinc-400 font-medium">
+            <DialogDescription className="text-[11px] sm:text-sm text-zinc-500 dark:text-zinc-400">
               Defina um horário diferenciado para uma data específica.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-8 flex flex-col gap-6">
+          <div className="p-6 sm:p-8 bg-white dark:bg-zinc-950 flex flex-col gap-4 sm:gap-6 max-h-[60vh] sm:max-h-none overflow-y-auto">
             <div className="grid gap-3">
               <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Data da Exceção</Label>
               <Input 
                 type="date"
                 value={newOverride.date}
                 onChange={(e) => setNewOverride({...newOverride, date: e.target.value})}
-                className="h-14 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 font-bold dark:text-zinc-100"
+                className="h-12 sm:h-14 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 font-bold dark:text-zinc-100 focus:ring-2 focus:ring-blue-600/20"
               />
             </div>
 
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/30">
+              <div className="grid gap-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Tipo de Exceção</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-zinc-400">{newOverride.isActive ? 'Trabalhar' : 'Dia de Folga'}</span>
-                  <Switch 
-                    checked={newOverride.isActive}
-                    onCheckedChange={(checked) => setNewOverride({...newOverride, isActive: checked})}
-                  />
-                </div>
+                <p className="text-xs font-bold text-zinc-600 dark:text-zinc-300">
+                  {newOverride.isActive ? 'Trabalhar em horário específico' : 'Dia de folga / Bloqueado'}
+                </p>
               </div>
+              <Switch 
+                checked={newOverride.isActive}
+                onCheckedChange={(checked) => setNewOverride({...newOverride, isActive: checked})}
+                className="data-[state=checked]:bg-blue-600"
+              />
             </div>
 
             {newOverride.isActive && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="grid gap-3">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">Início</Label>
-                  <Input 
-                    type="time"
-                    value={newOverride.startTime}
-                    onChange={(e) => setNewOverride({...newOverride, startTime: e.target.value})}
-                    className="h-14 text-center bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl font-bold dark:text-zinc-100"
-                  />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Início</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Input 
+                      type="time"
+                      value={newOverride.startTime}
+                      onChange={(e) => setNewOverride({...newOverride, startTime: e.target.value})}
+                      className="h-12 sm:h-14 w-full pl-12 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl font-bold dark:text-zinc-100"
+                    />
+                  </div>
                 </div>
                 <div className="grid gap-3">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">Término</Label>
-                  <Input 
-                    type="time"
-                    value={newOverride.endTime}
-                    onChange={(e) => setNewOverride({...newOverride, endTime: e.target.value})}
-                    className="h-14 text-center bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl font-bold dark:text-zinc-100"
-                  />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Término</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Input 
+                      type="time"
+                      value={newOverride.endTime}
+                      onChange={(e) => setNewOverride({...newOverride, endTime: e.target.value})}
+                      className="h-12 sm:h-14 w-full pl-12 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl font-bold dark:text-zinc-100"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -498,29 +507,29 @@ export default function AvailabilityPage() {
                 placeholder="Ex: Plantão Estendido"
                 value={newOverride.label}
                 onChange={(e) => setNewOverride({...newOverride, label: e.target.value})}
-                className="h-14 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 font-bold dark:text-zinc-100"
+                className="h-12 sm:h-14 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 font-bold dark:text-zinc-100"
               />
             </div>
           </div>
 
-          <DialogFooter className="p-8 pt-0 bg-white dark:bg-zinc-950 flex flex-col sm:flex-row gap-4">
-             <Button 
-                variant="ghost" 
-                onClick={closeOverrideDialog}
-                className="flex-1 h-14 font-black uppercase tracking-widest text-[11px] rounded-2xl"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleSaveOverride}
-                disabled={isSaving}
-                className="flex-1 h-14 bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl shadow-blue-200/50 dark:shadow-none transition-all hover:scale-[1.02] active:scale-95"
-              >
-                {isSaving ? <Loader2 className="animate-spin text-white" /> : (editingId ? "Atualizar" : "Salvar Exceção")}
-              </Button>
+          <DialogFooter className="px-6 py-5 sm:p-8 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/30 flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              onClick={closeOverrideDialog}
+              className="h-12 sm:h-14 w-full sm:flex-1 font-black uppercase tracking-widest text-[11px] rounded-2xl text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all order-2 sm:order-1"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSaveOverride}
+              disabled={isSaving}
+              className="h-12 sm:h-14 w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl shadow-blue-200/50 dark:shadow-none transition-all hover:scale-[1.02] active:scale-95 text-white order-1 sm:order-2"
+            >
+              {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : (editingId ? "Atualizar" : "Salvar Exceção")}
+            </Button>
           </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        </DialogContent>
+      </Dialog>
 
         <Dialog open={isConflictAlertOpen} onOpenChange={setIsConflictAlertOpen}>
           <DialogContent className="sm:max-w-[400px] rounded-3xl p-6 border-none shadow-2xl bg-white dark:bg-zinc-950">

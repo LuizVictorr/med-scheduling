@@ -74,6 +74,8 @@ const eventTypes = [
   { value: "Eletrocardiograma", label: "Eletrocardiograma", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
   { value: "Doppler Arterial", label: "Doppler Arterial", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
   { value: "MAPA 24H", label: "MAPA 24H", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  { value: "Ultrassom", label: "Ultrassom", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  { value: "Cirurgia", label: "Procedimento Cirúrgico", icon: ShieldAlert, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-900/20" },
 ]
 
 interface Appointment {
@@ -85,9 +87,9 @@ interface Appointment {
   color?: string
 }
 
-const getEventStyles = (typeId: string, services: any[], eventTypes: any[]) => {
+const getEventStyles = (typeId: string, services: any[], eventTypesList: any[]) => {
   const service = services.find(s => s.id?.toLowerCase() === typeId?.toLowerCase())
-  const eventType = eventTypes.find(e => e.id?.toLowerCase() === typeId?.toLowerCase())
+  const eventType = eventTypesList.find(e => e.id?.toLowerCase() === typeId?.toLowerCase())
   const typeName = service ? service.nome : (eventType ? eventType.nome : typeId)
 
   switch (typeName) {
@@ -97,9 +99,17 @@ const getEventStyles = (typeId: string, services: any[], eventTypes: any[]) => {
         dot: "bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]",
         month: "bg-rose-600/10 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50 bg-white dark:bg-zinc-900"
       }
+    case "Cirurgia":
+      return {
+        card: "bg-rose-500 text-white border-rose-600 shadow-rose-100 dark:shadow-none",
+        dot: "bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]",
+        month: "bg-rose-500/10 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50 bg-white dark:bg-zinc-900"
+      }
     case "Eletrocardiograma":
     case "Doppler Arterial":
     case "MAPA 24H":
+    case "Ultrassom":
+    case "Exame":
       return {
         card: "bg-emerald-600 text-white border-emerald-700 shadow-emerald-100 dark:shadow-none",
         dot: "bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]",
@@ -621,56 +631,44 @@ export default function CalendarPage() {
                   </div>
 
                   <div className="grid gap-3">
-                    <Label htmlFor="type" className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Tipo da Ocorrência</Label>
+                    <Label htmlFor="type" className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Tipo de Serviço Clínico</Label>
                     <Select value={formData.type} onValueChange={(v) => v && setFormData({ ...formData, type: v })}>
-                      <SelectTrigger className="!h-14 w-full font-bold bg-zinc-50/20 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 dark:text-zinc-100">
+                      <SelectTrigger className="!h-14 w-full font-bold bg-zinc-50/20 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 dark:text-zinc-100 focus:ring-blue-600/20 active:scale-[0.98] transition-all">
                         {(() => {
-                          const service = services.find(s => s.id === formData.type);
                           const eventType = eventTypesList.find(e => e.id === formData.type);
-                          const typeName = service ? service.nome : (eventType ? eventType.nome : "");
-                          const template = eventTypes.find(t => t.value === typeName);
+                          const typeName = eventType ? eventType.nome : "";
+                          const template = eventTypes.find(t => t.value === typeName) || {
+                             icon: Activity,
+                             color: "text-blue-600 dark:text-blue-400",
+                             bg: "bg-blue-50 dark:bg-blue-900/20"
+                          };
                           
                           return (
                             <div className="flex items-center gap-3">
-                              {template && (
-                                <div className={cn("p-1.5 rounded-lg", template.bg)}>
-                                  {React.createElement(template.icon, { className: cn("size-3.5", template.color) })}
-                                </div>
-                              )}
+                              <div className={cn("p-1.5 rounded-lg", template.bg)}>
+                                {React.createElement(template.icon, { className: cn("size-3.5", template.color) })}
+                              </div>
                               <span className="font-bold truncate">
-                                {typeName || "Selecione um serviço"}
+                                {typeName || "Selecione um tipo de evento"}
                               </span>
                             </div>
                           );
                         })()}
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl shadow-2xl p-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 max-h-[400px]">
-                        <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">Serviços Clínicos</div>
-                        {services.map((s) => {
-                          const template = eventTypes.find(t => t.value === s.nome);
-                          if (!template) return null;
-                          return (
-                            <SelectItem key={s.id} value={s.id} className="rounded-xl px-4 py-3 focus:bg-zinc-50 dark:focus:bg-zinc-800 group/item">
-                              <div className="flex items-center gap-4">
-                                <div className={cn("p-2 rounded-lg", template.bg)}>
-                                  <template.icon className={cn("size-4", template.color)} />
-                                </div>
-                                <span className="font-bold text-zinc-700 dark:text-zinc-300 group-focus/item:text-zinc-900 dark:group-focus/item:text-zinc-100 tracking-tight">{s.nome}</span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                        <div className="px-4 py-2 mt-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">Tipos de Ocorrência</div>
+                      <SelectContent className="rounded-2xl shadow-2xl p-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 max-h-[400px]">
                         {eventTypesList.map((e) => {
-                          const template = eventTypes.find(t => t.value === e.nome);
-                          if (!template) return null;
+                          const template = eventTypes.find(t => t.value === e.nome) || {
+                             icon: Activity,
+                             color: "text-blue-600 dark:text-blue-400",
+                             bg: "bg-blue-50 dark:bg-blue-900/20"
+                          };
                           return (
-                            <SelectItem key={e.id} value={e.id} className="rounded-xl px-4 py-3 focus:bg-zinc-50 dark:focus:bg-zinc-800 group/item">
+                            <SelectItem key={e.id} value={e.id} className="rounded-xl px-4 py-3 focus:bg-zinc-50 dark:focus:bg-zinc-900 group/item transition-colors">
                               <div className="flex items-center gap-4">
-                                <div className={cn("p-2 rounded-lg", template.bg)}>
+                                <div className={cn("p-2 rounded-lg transition-transform group-focus/item:scale-110", template.bg)}>
                                   <template.icon className={cn("size-4", template.color)} />
                                 </div>
-                                <span className="font-bold text-zinc-700 dark:text-zinc-300 group-focus/item:text-zinc-900 dark:group-focus/item:text-zinc-100 tracking-tight">{e.nome}</span>
+                                <span className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{e.nome}</span>
                               </div>
                             </SelectItem>
                           );
@@ -747,7 +745,7 @@ export default function CalendarPage() {
 
         <div className={`grid gap-6 h-full transition-all duration-300 ${showMiniCalendar ? 'lg:grid-cols-[280px_1fr]' : 'grid-cols-1'}`}>
           {showMiniCalendar && (
-            <div className="flex flex-col gap-6 animate-in slide-in-from-left-4 fade-in duration-300 sticky top-8 self-start">
+            <div className="flex flex-col gap-6 animate-in slide-in-from-left-4 fade-in duration-300 lg:sticky lg:top-8 lg:self-start">
               <Card className="shadow-sm border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900/50">
                 <CardHeader className="pb-2 flex flex-row items-center justify-between bg-zinc-50/50 dark:bg-transparent border-b dark:border-zinc-800">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Agenda Geral</CardTitle>

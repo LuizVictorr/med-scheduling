@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Plus, MoreHorizontal, Edit, Trash2, CalendarIcon } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Edit, Trash2, Calendar as CalendarIcon, User, ShieldAlert, RotateCcw, Activity } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getAppointments, createAppointment, deleteAppointment, updateAppointmentStatus, updateAppointment, getServices, getEventTypes } from "@/app/calendar/actions"
 import { format, parseISO, setHours, setMinutes } from "date-fns"
@@ -61,12 +61,14 @@ const statusStyles: Record<string, string> = {
 }
 
 const eventTypes = [
-  { value: "Consulta", label: "Consulta" },
-  { value: "Retorno", label: "Retorno" },
-  { value: "Eletrocardiograma", label: "Eletrocardiograma" },
-  { value: "Doppler Arterial", label: "Doppler Arterial" },
-  { value: "MAPA 24H", label: "MAPA 24H" },
-  { value: "Bloqueio", label: "Bloqueio" },
+  { value: "Consulta", label: "Consulta Particular", icon: User, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20" },
+  { value: "Bloqueio", label: "Bloqueio da Agenda", icon: ShieldAlert, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-900/20" },
+  { value: "Retorno", label: "Retorno de Paciente", icon: RotateCcw, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/20" },
+  { value: "Eletrocardiograma", label: "Eletrocardiograma", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  { value: "Doppler Arterial", label: "Doppler Arterial", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  { value: "MAPA 24H", label: "MAPA 24H", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  { value: "Ultrassom", label: "Ultrassom", icon: Activity, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  { value: "Cirurgia", label: "Procedimento Cirúrgico", icon: ShieldAlert, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-900/20" },
 ]
 
 export default function BookingsPage() {
@@ -80,6 +82,8 @@ export default function BookingsPage() {
   const [appointmentToDelete, setAppointmentToDelete] = React.useState<any | null>(null)
   const [services, setServices] = React.useState<any[]>([])
   const [eventTypesList, setEventTypesList] = React.useState<any[]>([])
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const [itemsPerPage, setItemsPerPage] = React.useState(10)
   
   const [formData, setFormData] = React.useState({
     patientName: "",
@@ -125,6 +129,11 @@ export default function BookingsPage() {
   React.useEffect(() => {
     loadData()
   }, [])
+
+  // Reset page on search
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,6 +230,9 @@ export default function BookingsPage() {
     b.patientName?.toLowerCase().includes(search.toLowerCase())
   )
 
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -255,7 +267,7 @@ export default function BookingsPage() {
               {editingId ? "Atualize as informações do agendamento." : "Insira os detalhes do paciente para criar uma reserva direta."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="p-8 bg-white dark:bg-zinc-950 grid gap-6">
+          <form onSubmit={handleSubmit} className="p-8 bg-white dark:bg-zinc-950 grid gap-6 max-h-[70vh] sm:max-h-none overflow-y-auto">
             <div className="grid gap-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nome do Paciente</Label>
               <Input 
@@ -267,22 +279,50 @@ export default function BookingsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Tipo</Label>
                 <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v || "" })}>
-                  <SelectTrigger className="!h-12 w-full rounded-xl border-zinc-200">
-                    <span className="font-bold truncate">
-                      {services.find(s => s.id === formData.type)?.nome || 
-                       eventTypesList.find(e => e.id === formData.type)?.nome || 
-                       "Selecione um serviço"}
-                    </span>
+                  <SelectTrigger className="!h-12 w-full rounded-xl border-zinc-200 dark:bg-zinc-900/50 dark:border-zinc-800 transition-all focus:ring-blue-600/20 active:scale-[0.98]">
+                    {(() => {
+                      const service = services.find(s => s.id === formData.type);
+                      const typeName = service ? service.nome : (editingId ? "Aguarde..." : "");
+                      const template = eventTypes.find(t => t.value === typeName) || {
+                        icon: Activity,
+                        color: "text-blue-600 dark:text-blue-400",
+                        bg: "bg-blue-50 dark:bg-blue-900/20"
+                      };
+
+                      return (
+                        <div className="flex items-center gap-3">
+                          <div className={cn("p-1.5 rounded-lg", template.bg)}>
+                            {React.createElement(template.icon, { className: cn("size-3.5", template.color) })}
+                          </div>
+                          <span className="font-bold truncate">
+                            {typeName || "Selecione um serviço"}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </SelectTrigger>
-                  <SelectContent>
-                    <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-400">Serviços Clínicos</div>
-                    {services.map(s => <SelectItem key={s.id} value={s.id} className="font-bold">{s.nome}</SelectItem>)}
-                    <div className="px-2 py-1.5 mt-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">Tipos de Ocorrência</div>
-                    {eventTypesList.map(e => <SelectItem key={e.id} value={e.id} className="font-bold">{e.nome}</SelectItem>)}
+                  <SelectContent className="rounded-2xl shadow-2xl p-2 border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 max-h-[300px]">
+                    {services.map((s) => {
+                      const template = eventTypes.find(t => t.value === s.nome) || {
+                        icon: Activity,
+                        color: "text-blue-600 dark:text-blue-400",
+                        bg: "bg-blue-50 dark:bg-blue-900/20"
+                      };
+                      return (
+                        <SelectItem key={s.id} value={s.id} className="rounded-xl px-4 py-3 focus:bg-zinc-50 dark:focus:bg-zinc-900 group/item transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className={cn("p-2 rounded-lg transition-transform group-focus/item:scale-110", template.bg)}>
+                              <template.icon className={cn("size-4", template.color)} />
+                            </div>
+                            <span className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{s.nome}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -395,12 +435,12 @@ export default function BookingsPage() {
                 <TableRow>
                   <TableCell colSpan={6} className="h-40 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto opacity-20" /></TableCell>
                 </TableRow>
-              ) : filteredData.length === 0 ? (
+              ) : paginatedData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-40 text-center text-muted-foreground font-medium">Nenhuma reserva encontrada.</TableCell>
                 </TableRow>
               ) : (
-                filteredData.map((booking) => (
+                paginatedData.map((booking) => (
                   <TableRow key={booking.id} className="group border-b dark:border-zinc-900/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
                     <TableCell className="py-4">
                       <div className="flex flex-col">
@@ -465,11 +505,46 @@ export default function BookingsPage() {
               )}
             </TableBody>
           </Table>
-          <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-400 bg-zinc-50/30 dark:bg-zinc-950/30">
-            <span>{filteredData.length} agendamentos registrados</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="h-8 px-4 rounded-lg text-[10px]" disabled>Anterior</Button>
-              <Button variant="outline" size="sm" className="h-8 px-4 rounded-lg text-[10px]">Próxima</Button>
+          <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400 bg-zinc-50/30 dark:bg-zinc-950/30">
+            <div className="flex items-center gap-4">
+              <span>{filteredData.length} registros</span>
+              <div className="flex items-center gap-2 border-l pl-4 dark:border-zinc-800">
+                <span className="hidden sm:inline">Exibir</span>
+                <Select value={String(itemsPerPage)} onValueChange={(v) => setItemsPerPage(Number(v))}>
+                  <SelectTrigger className="h-7 w-16 text-[10px] font-bold border-zinc-200 dark:border-zinc-800 rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {[5, 10, 20, 50].map(size => (
+                      <SelectItem key={size} value={String(size)} className="text-[10px] font-bold">{size}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <span className="text-zinc-500">Página {currentPage} de {totalPages || 1}</span>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-4 rounded-lg text-[10px] border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-95 disabled:opacity-30" 
+                  disabled={currentPage === 1 || isLoading}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                >
+                  Anterior
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-4 rounded-lg text-[10px] border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-95 disabled:opacity-30" 
+                  disabled={currentPage === totalPages || totalPages === 0 || isLoading}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                >
+                  Próxima
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
